@@ -1,5 +1,24 @@
 package com.kesmarki.homework.service;
 
+import com.kesmarki.homework.controller.request.AddressRequest;
+import com.kesmarki.homework.controller.request.AddContactRequest;
+import com.kesmarki.homework.controller.request.AddPersonRequest;
+import com.kesmarki.homework.controller.response.PersonResponse;
+import com.kesmarki.homework.exception.PersonNotFoundException;
+import com.kesmarki.homework.model.Address;
+import com.kesmarki.homework.model.Contact;
+import com.kesmarki.homework.model.Person;
+import com.kesmarki.homework.repository.AddressRepository;
+import com.kesmarki.homework.repository.ContactRepository;
+import com.kesmarki.homework.repository.PersonRepository;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Transactional
@@ -30,4 +49,98 @@ public class PersonService {
         return personResponses;
     }
 
+    public PersonResponse findPersonByID(Long id){
+
+        var person = personRepository.findById(id);
+
+        if (person.isPresent()) {
+            return PersonResponse.builder().id(person.get().getId()).name(person.get().getName()).addresses(person.get().getAddresses()).build();
+        } else {
+            throw new PersonNotFoundException("Person not found with id: " + id);
+        }
+    }
+
+    @Transactional
+    public void addPerson(AddPersonRequest addPersonRequest) {
+
+        var person = Person.builder().name(addPersonRequest.getName()).build();
+
+        logger.info("Save person.");
+
+        personRepository.save(person);
+    }
+    @Transactional
+    public void addAddressToPerson(Long personId, AddressRequest addressRequest) {
+
+        var person = personRepository.findById(personId);
+
+        if (person.isEmpty()) {
+            throw new PersonNotFoundException("Person not found with id: " + personId);
+        }
+
+
+        boolean addressTypeExists = person.get().getAddresses().stream()
+                .anyMatch(address -> address.getType().equals(addressRequest.getType()));
+
+        if (addressTypeExists) {
+            throw new IllegalArgumentException("This type already has an address assigned to the person.");
+        }
+        var address = Address.builder().address(addressRequest.getAddress()).type(addressRequest.getType()).build();
+
+        address.setPerson(person.get());
+        addressRepository.save(address);
+    }
+
+    @Transactional
+    public String addContactToPerson(Long personId, AddContactRequest addContactRequest) {
+        var optionalAddress = addressRepository.findByPersonIdAndAddress(personId.toString(), addContactRequest.getAddress());
+
+        if (optionalAddress.isPresent()) {
+            Contact contact = Contact.builder()
+                    .type(addContactRequest.getType())
+                    .contactInfo(addContactRequest.getContactInfo())
+                    .address(optionalAddress.get())
+                    .build();
+            contactRepository.save(contact);
+            return "Contact added successfully.";
+        } else {
+            throw new PersonNotFoundException("Person with id " + personId + "and with addres " + addContactRequest.getAddress()  + " not found.");
+        }
+   }
+   @Transactional
+    public void deletePerson(Long id) {
+        Person person = personRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+
+        List<Address> addresses = person.getAddresses();
+        for (Address address : addresses) {
+            List<Contact> contacts = address.getContacts();
+            for (Contact contact : contacts) {
+                contactRepository.delete(contact);
+            }
+            addressRepository.delete(address);
+        }
+
+        personRepository.delete(person);
+    }
+
+    @Transactional
+    public void updateAddress(Long personId, AddressRequest updatedAddress) {
+
+        var existingAddress = addressRepository.findByPersonIdAndType(personId, updatedAddress.getType());
+
+        if (existingAddress.isPresent() == false) {
+            existingAddress.get().setAddress(updatedAddress.getAddress());
+            addressRepository.save(existingAddress.get());
+        }
+    }
+
+    @Transactional
+    public void deleteAddress(Long id) {
+
+        var address = addressRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Address not found with id: " + id));
+        for (Contact contact : address.getContacts()) {
+            contactRepository.delete(contact);
+        }
+        addressRepository.delete(address);
+    }
 }
