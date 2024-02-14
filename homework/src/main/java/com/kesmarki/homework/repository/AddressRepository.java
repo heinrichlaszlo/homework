@@ -9,11 +9,18 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-
+/**
+ * Address repository
+ */
 @Repository
 public interface AddressRepository extends JpaRepository<Address, Long> {
     List<Address> findByPersonId(Long id);
-
+    /**
+     * Find address by person id and address
+     * @param personId
+     * @param address
+     * @return  Optional<Address>
+     */
     @Query("SELECT a FROM Address a WHERE a.person.id= :personId AND a.address = :address ")
     Optional<Address> findByPersonIdAndAddress(@Param("personId") String personId, @Param("address") String address);
 

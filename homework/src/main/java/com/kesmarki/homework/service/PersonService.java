@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class is responsible for the business logic of the person.
+ */
 @Service
 @Transactional
 @Slf4j
@@ -37,6 +40,11 @@ public class PersonService {
         this.contactRepository = contactRepository;
     }
 
+    /**
+     * This method returns all persons.
+     *
+     * @return  List<PersonResponse>
+     */
     public List<PersonResponse> findAllPersons(){
 
         var persons = personRepository.findAll();
@@ -49,6 +57,12 @@ public class PersonService {
         return personResponses;
     }
 
+    /**
+     * This method returns a person by id.
+     *
+     * @param id
+     * @return PersonResponse
+     */
     public PersonResponse findPersonByID(Long id){
 
         var person = personRepository.findById(id);
@@ -59,7 +73,11 @@ public class PersonService {
             throw new PersonNotFoundException("Person not found with id: " + id);
         }
     }
-
+    /**
+     * This method adds a person.
+     *
+     * @param addPersonRequest
+     */
     @Transactional
     public void addPerson(AddPersonRequest addPersonRequest) {
 
@@ -69,6 +87,12 @@ public class PersonService {
 
         personRepository.save(person);
     }
+    /**
+     * This method adds an address to a person.
+     *
+     * @param personId the id of the person.
+     * @param addressRequest
+     */
     @Transactional
     public void addAddressToPerson(Long personId, AddressRequest addressRequest) {
 
@@ -90,7 +114,13 @@ public class PersonService {
         address.setPerson(person.get());
         addressRepository.save(address);
     }
-
+    /**
+     * This method adds a contact to a person.
+     *
+     * @param personId the id of the person.
+     * @param addContactRequest
+     * @return String
+     */
     @Transactional
     public String addContactToPerson(Long personId, AddContactRequest addContactRequest) {
         var optionalAddress = addressRepository.findByPersonIdAndAddress(personId.toString(), addContactRequest.getAddress());
@@ -107,6 +137,11 @@ public class PersonService {
             throw new PersonNotFoundException("Person with id " + personId + "and with addres " + addContactRequest.getAddress()  + " not found.");
         }
    }
+   /**
+     * This method deletes a person by id.
+     *
+     * @param id
+     */
    @Transactional
     public void deletePerson(Long id) {
         Person person = personRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
@@ -122,7 +157,12 @@ public class PersonService {
 
         personRepository.delete(person);
     }
-
+    /**
+     * This method updates an address.
+     *
+     * @param personId the id of the person.
+     * @param updatedAddress
+     */
     @Transactional
     public void updateAddress(Long personId, AddressRequest updatedAddress) {
 
@@ -133,7 +173,11 @@ public class PersonService {
             addressRepository.save(existingAddress.get());
         }
     }
-
+    /**
+     * This method deletes an address by id.
+     *
+     * @param id
+     */
     @Transactional
     public void deleteAddress(Long id) {
 

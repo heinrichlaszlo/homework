@@ -3,7 +3,9 @@ package com.kesmarki.homework.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-
+/**
+ * Contact entity
+ */
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor

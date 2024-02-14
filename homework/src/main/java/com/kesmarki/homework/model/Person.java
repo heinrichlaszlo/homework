@@ -6,7 +6,9 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Person entity
+ */
 @Entity
 @Getter
 @Setter
